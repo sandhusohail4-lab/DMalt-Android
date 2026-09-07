@@ -1,0 +1,47 @@
+name: Build D.Malt APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get project
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Set up Android
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: |
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Extract D.Malt project
+        run: |
+          mkdir project
+          unzip -q *.zip -d project
+
+      - name: Build APK
+        run: |
+          PROJECT_DIR=$(find project -name settings.gradle.kts -print -quit | xargs dirname)
+          cd "$PROJECT_DIR"
+          gradle assembleDebug --stacktrace
+
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: D-Malt-APK
+          path: project/**/app/build/outputs/apk/debug/app-debug.apk
